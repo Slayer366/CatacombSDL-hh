@@ -1,34 +1,23 @@
-cmake_minimum_required(VERSION 2.8)
-project(TheCatacomb)
+cmake_minimum_required(VERSION 3.19)
+project(catacomb)
 
 include(CheckFunctionExists)
 
-check_function_exists(stricmp STRICMP_EXISTS)
-check_function_exists(strnicmp STRNICMP_EXISTS)
-if(NOT STRICMP_EXISTS)
-	add_definitions(-Dstricmp=strcasecmp)
-endif(NOT STRICMP_EXISTS)
-if(NOT STRNICMP_EXISTS)
-	add_definitions(-Dstrnicmp=strncasecmp)
-endif(NOT STRNICMP_EXISTS)
+set(SRC ${CMAKE_CURRENT_SOURCE_DIR})
+set(BIN ${CMAKE_CURRENT_BINARY_DIR})
 
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake/;${CMAKE_MODULE_PATH}")
-find_package(SDL2)
-include_directories(${SDL2_INCLUDE_DIR})
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -g -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -std=c++11")
 
-if(MSVC)
-	add_definitions("/wd4996")
-else(MSVC)
-	set(CMAKE_C_FLAGS "-Wall -Wno-unused-result ${CMAKE_C_FLAGS}")
-	set(CMAKE_CXX_FLAGS "-Wall -Wno-unused-result ${CMAKE_CXX_FLAGS}")
-endif(MSVC)
+include_directories()
 
-# Typically reasonable to assume that an h file has a c/cpp file with it, so
-# we can take the easy way and glob them.
-file(GLOB HEADER_FILES *.h)
 
-add_executable(catacomb
-	${HEADER_FILES}
+link_directories(
+  ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+# Add all the files needed to compile here
+add_executable(${PROJECT_NAME}
 	cat_play.c
 	catacomb.c
 	catasm.c
@@ -39,4 +28,25 @@ add_executable(catacomb
 	rleasm.c
 )
 
-target_link_libraries(catacomb ${SDL2_LIBRARY})
+# Library to link to (drop the -l prefix). This will mostly be stubs.
+target_link_libraries(${PROJECT_NAME}
+	SDL2
+	SDL2_image
+	SDL2_mixer
+	m
+	z
+	jpeg
+	png
+	webp
+	mikmod
+	mpg123
+	vorbis
+	vorbisfile
+	ogg
+	pthread
+	FLAC
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+   "/usr/include/SDL2"
+)
