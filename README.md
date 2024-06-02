@@ -1,3 +1,9 @@
+- Buy the game [here](https://gog.com/game/catacombs_pack) and install it.
+
+- Inside the install folder locate the 'Catacomb' directory
+
+- Copy the files from the 'Catacomb' directory
+
 CatacombSDL
 ===========
 
