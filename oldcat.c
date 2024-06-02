@@ -21,6 +21,7 @@
 */
 
 #include "PCRLIB.H"
+#include "catdefs.h"
 
 #define maxpics 2047
 #define numtiles 24*24-1   /*number of tiles displayed on screen*/
@@ -498,8 +499,16 @@ void loadlevel(void)
   char sm[4096];
 
   strcpy (filename,"LEVEL");
-  itoa (level,st,10);
+  itoa_catacomb(level,st,10);
   strcat (filename,level);
+
+  SDL_RWops *file = SDL_RWFromFile(filename, "r");
+  if (file == NULL) {
+      fprintf(stderr, "Error: Game data file '%s' not found.\n", filename);
+      SDL_Quit();
+      exit(1);
+  }
+  SDL_RWclose(file);
 
   LoadFile (filename,sm);
 

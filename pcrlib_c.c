@@ -16,6 +16,10 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_gamecontroller.h>
+#include <SDL2/SDL_scancode.h>
+#include <string.h>
 #define CATALOG
 
 #ifdef _MSC_VER
@@ -120,31 +124,31 @@ static int WatchUIEvents (void *udata, SDL_Event *event)
 {
 	if (event->type == SDL_QUIT)
 		_quit("");
-	else if (event->type == SDL_WINDOWEVENT)
-	{
-		switch(event->window.event)
-		{
-			case SDL_WINDOWEVENT_FOCUS_LOST:
-				hasFocus = false;
-				CheckMouseMode ();
-				break;
-			case SDL_WINDOWEVENT_FOCUS_GAINED:
+//	else if (event->type == SDL_WINDOWEVENT)
+//	{
+//		switch(event->window.event)
+//		{
+//			case SDL_WINDOWEVENT_FOCUS_LOST:
+//				hasFocus = false;
+//				CheckMouseMode ();
+//				break;
+//			case SDL_WINDOWEVENT_FOCUS_GAINED:
 				// Try to wait until the window obtains mouse focus before
 				// regrabbing input in order to try to prevent grabbing while
 				// the user is trying to move the window around.
-				while(SDL_GetMouseFocus () != window)
-				{
+//				while(SDL_GetMouseFocus () != window)
+//				{
 					SDL_PumpEvents();
 					SDL_Delay(10);
-				}
+//				}
 
-				hasFocus = true;
-				CheckMouseMode ();
-				break;
-			default:
-				break;
-		}
-	}
+//				hasFocus = true;
+//				CheckMouseMode ();
+//				break;
+//			default:
+//				break;
+//		}
+//	}
 	return 0;
 }
 
@@ -520,10 +524,18 @@ void LoadDemo (int demonum)
   char st2[5];
 
   strcpy (str,"DEMO");
-  itoa (demonum,st2,10);
+  itoa_catacomb(demonum,st2,10);
   strcat (str,st2);
   strcat (str,".");
   strcat (str,_extension);
+
+  SDL_RWops *file = SDL_RWFromFile(str, "r");
+  if (file == NULL) {
+      fprintf(stderr, "Error: Game data file '%s' not found.\n", str);
+      SDL_Quit();
+      exit(1);
+  }
+  SDL_RWclose(file);
 
   LoadFile (str,demobuffer);
   level=demobuffer[0];
@@ -536,10 +548,18 @@ void SaveDemo (int demonum)
   char st2[5];
 
   strcpy (str,"DEMO");
-  itoa (demonum,st2,10);
+  itoa_catacomb(demonum,st2,10);
   strcat (str,st2);
   strcat (str,".");
   strcat (str,_extension);
+
+  SDL_RWops *file = SDL_RWFromFile(str, "r");
+  if (file == NULL) {
+      fprintf(stderr, "Error: Game data file '%s' not found.\n", str);
+      SDL_Quit();
+      exit(1);
+  }
+  SDL_RWclose(file);
 
   SaveFile (str,demobuffer,(long)(demoptr-&demobuffer[0]));
   indemo = notdemo;
@@ -827,6 +847,12 @@ int bioskey(int cmd)
 				return lastkey = event.key.keysym.scancode;
 			return event.key.keysym.scancode;
 		}
+		if (event.type == SDL_CONTROLLERBUTTONDOWN)
+		{
+			if(cmd == 1)
+				return lastkey = event.cbutton.button;
+			return event.cbutton.button;
+		}
 	}
 	return lastkey;
 }
@@ -865,8 +891,10 @@ void UpdateScreen()
 		assert(false && "VGA Palette conversion not implemented.");
 
 	SDL_UpdateTexture(sdltexture, NULL, conv, 320*sizeof(Uint32));
+
+  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
-	SDL_RenderCopy(renderer, sdltexture, NULL, &updateRect);
+	SDL_RenderCopy(renderer, sdltexture, NULL, NULL);
 	SDL_RenderPresent(renderer);
 }
 
@@ -944,13 +972,13 @@ void printchartile (const char *str)
 
 void printint (int val)
 {
-  itoa(val,str,10);
+  itoa_catacomb(val,str,10);
   print (str);
 }
 
 void printlong (long val)
 {
-  ltoa(val,str,10);
+  ltoa_catacomb(val,str,10);
   print (str);
 }
 
@@ -1209,6 +1237,7 @@ void _loadctrls (void)
 
   strcpy (str,"CTLPANEL.");
   strcat (str,_extension);
+
   if ((handle = open(str, O_RDONLY | O_BINARY, S_IWRITE | S_IREAD)) == -1)
   //
   // set up default control panel settings
@@ -1226,6 +1255,7 @@ void _loadctrls (void)
     MouseSensitivity = 5;
 
     key[north] = SDL_SCANCODE_UP;
+    key[north] = SDL_CONTROLLERBUTTONUP;
     key[northeast] = SDL_SCANCODE_PAGEUP;
     key[east] = SDL_SCANCODE_RIGHT;
     key[southeast] = SDL_SCANCODE_PAGEDOWN;
@@ -1368,19 +1398,19 @@ void _showhighscores (void)
       sx++;
     if (h<10l)
       sx++;
-    ltoa(h,str,10);
+    ltoa_catacomb(h,str,10);
     print (str);
     sx++;
     if (highscores[i].level<10)
       sx++;
-    itoa(highscores[i].level,str,10);
+    itoa_catacomb(highscores[i].level,str,10);
     print (str);
     sx++;
     print (highscores[i].initials);
     print ("\n\n");
   }
   strcpy (str,"SCORE:");
-  ltoa (score,st2,10);
+  ltoa_catacomb(score,st2,10);
   strcat (str,st2);
 
   _printc (str);
@@ -1408,7 +1438,7 @@ void _checkhighscore (void)
       }
       highscores[i].score = score;
       highscores[i].level = level;
-      strcpy(highscores[i].initials,"   ");
+      strcpy(highscores[i].initials,"PLR");
       break;
     }
 
@@ -1425,6 +1455,12 @@ void _checkhighscore (void)
     sx = screencenterx-17/2+14;
     sy = screencentery-17/2+6+i*2;
     j=0;
+	/* memset(highscores[i].initials, 0, sizeof(highscores[i].initials)); */
+	strcpy(highscores[i].initials, "PLR");
+	drawchar(sx, sy, 'P');
+	drawchar(sx+1, sy, 'L');
+	drawchar(sx+2, sy, 'R');
+	/**
     do
     {
       ch = k = get();
@@ -1442,6 +1478,7 @@ void _checkhighscore (void)
 	  j--;
 	}
     } while (ch != 13);
+	**/
   }
 }
 
@@ -1455,11 +1492,9 @@ void _checkhighscore (void)
 void SetupEmulatedVBL();
 byte screenseg[320*200];
 
-static char* VideoParmStrings[] = {"windowed", "screen", 0};
-
 void _setupgame (void)
 {
-  if (SDL_Init (SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_JOYSTICK|SDL_INIT_GAMECONTROLLER) < 0)
+  if (SDL_Init (SDL_INIT_VIDEO |SDL_INIT_TIMER | SDL_INIT_NOPARACHUTE) != 0)
   {
     fprintf(stderr, "Failed to initialize SDL: %s\n", SDL_GetError());
     exit(1);
@@ -1468,50 +1503,30 @@ void _setupgame (void)
 
   SDL_AddEventWatch (WatchUIEvents, NULL);
 
-  int i;
-  boolean windowed = false;
-  unsigned winWidth = 640, winHeight = 480;
-  int displayindex = 0;
-  for (i = 1;i < _argc; ++i)
-  {
-    switch (US_CheckParm (_argv[i],VideoParmStrings))
-    {
-    case 0:
-      windowed = true;
-      if (++i < _argc)
-        winWidth = atoi (_argv[i]);
-      if (++i < _argc)
-        winHeight = atoi (_argv[i]);
-        break;
-    case 1:
-      if (++i < _argc)
-        displayindex = atoi (_argv[i]);
-      break;
+  int winWidth = 320, winHeight = 200;
+
+    window = SDL_CreateWindow("The Catacomb",
+                              SDL_WINDOWPOS_UNDEFINED,
+                              SDL_WINDOWPOS_UNDEFINED,
+                              winWidth,
+                              winHeight,
+                              SDL_WINDOW_FULLSCREEN);
+    if (window == NULL) {
+        fprintf(stderr, "Failed to create SDL window: %s\n", SDL_GetError());
+        atexit(SDL_Quit);
+        exit(1);
     }
-  }
 
-  SDL_Rect bounds;
-  if (SDL_GetCurrentDisplayMode (displayindex, &mode) < -1 ||
-      SDL_GetDisplayBounds (displayindex, &bounds) < 0)
-  {
-    fprintf(stderr, "Could not get display mode: %s\n", SDL_GetError());
-    exit(1);
-  }
+  SDL_RenderSetLogicalSize(renderer, 320, 200);
 
-  if (windowed)
-  {
-    bounds.x = SDL_WINDOWPOS_UNDEFINED;
-	bounds.y = SDL_WINDOWPOS_UNDEFINED;
-    mode.w = winWidth;
-    mode.h = winHeight;
-  }
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (renderer == NULL) {
+        fprintf(stderr, "Failed to create SDL renderer: %s\n", SDL_GetError());
+        atexit(SDL_Quit);
+        exit(1);
+    }
 
-  if ((window = SDL_CreateWindow ("The Catacomb", bounds.x, bounds.y, mode.w, mode.h, windowed ? 0 : SDL_WINDOW_FULLSCREEN_DESKTOP)) == NULL ||
-      (renderer = SDL_CreateRenderer (window, -1, 0)) == NULL)
-  {
-    fprintf(stderr, "Failed to create SDL window: %s\n", SDL_GetError());
-    exit(1);
-  }
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
   if (!(sdltexture = SDL_CreateTexture (renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 320, 200)))
   {
@@ -1519,23 +1534,8 @@ void _setupgame (void)
     exit(1);
   }
 
-  // Handle 320x200 and 640x400 specially so they are unscaled.
-  if ((mode.w == 320 && mode.h == 200) || (mode.w == 640 && mode.h == 400))
-  {
-    updateRect.w = mode.w;
-    updateRect.h = mode.h;
-    updateRect.x = updateRect.y = 0;
-  }
-  else
-  {
-    // Pillar box the 4:3 game
-    updateRect.h = mode.h;
-    updateRect.w = mode.h*4/3;
-    updateRect.x = (mode.w - updateRect.w)>>1;
-    updateRect.y = 0;
-  }
-
   memset(screenseg, 0, sizeof(screenseg));
+
 
 //
 // set up game's library routines
@@ -1547,6 +1547,7 @@ void _setupgame (void)
   joystick[1].device = joystick[2].device = -1;
  
   _loadctrls ();
+  ProbeJoysticks();
 
   if (grmode==VGAgr && _vgaok)
     grmode=VGAgr;
@@ -1557,6 +1558,14 @@ void _setupgame (void)
 
   strcpy (str,"SOUNDS.");
   strcat (str,_extension);
+
+  SDL_RWops *file = SDL_RWFromFile(str, "r");
+  if (file == NULL) {
+      fprintf(stderr, "Error: Game data file '%s' not found.\n", str);
+      SDL_Quit();
+      exit(1);
+  }
+  SDL_RWclose(file);
 
   SoundData = (SPKRtable *) bloadin (str);
 

@@ -233,7 +233,7 @@ void printscan (int sc)
  {
    char str[3];
    print ("F");
-   itoa (sc-0x3a,str,10);
+   itoa_catacomb(sc-0x3a,str,10);
    print (str);
  }
  else if (sc==0x57)
@@ -321,7 +321,7 @@ void calibratekeys (void)
     clearkeys ();
     UpdateScreen ();
     while ((new = bioskey (1)) == 0);
-      WaitVBL();
+    WaitVBL();
     clearkeys ();
     print ("\r                  ");
     if (select<8)
