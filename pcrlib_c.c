@@ -138,7 +138,7 @@ static int WatchUIEvents (void *udata, SDL_Event *event)
 				// the user is trying to move the window around.
 //				while(SDL_GetMouseFocus () != window)
 //				{
-					SDL_PumpEvents();
+//					SDL_PumpEvents();
 					SDL_Delay(10);
 //				}
 
