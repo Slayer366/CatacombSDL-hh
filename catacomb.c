@@ -204,7 +204,6 @@ void simplerefresh(void)
     cgarefresh();
   else
     egarefresh();
-
 }
 
 /*
@@ -254,7 +253,6 @@ void restore (void)
   clearold ();
   simplerefresh ();
 };
-
 
 
 /*      */
@@ -733,37 +731,38 @@ void dofkeys (void)
 
     case SDL_SCANCODE_F4:			// F4
       clearkeys ();
-      expwin (22,4);
+      expwin (16,1);
       if (indemo != notdemo)
       {
-	print ("Can't save game here!");
-	get ();
-	break;
+//        print ("Can't save game here!");
+        print ("Can't save!");
+        get ();
+        break;
       }
-      print ("Save as game #(1-9):");
-      ch=toupper(get());
-      drawchar (sx,sy,ch);
-      if (ch<'1' || ch>'9')
-	break;
+//      print ("Save as game #(1-9):");
+//      ch=toupper(get());
+//      drawchar (sx,sy,ch);
+//      if (ch<'1' || ch>'9')
+//	break;
       //
       // save game
       //
       strcpy (str,"GAME0.CA2");
-      str[4]=ch;
-      if (_Verify(str))
-      {
-	print ("\nGame exists,\noverwrite (Y/N)?");
-	ch=get();
-	if (ch!='Y' && ch!='y')
-	  break;
-	sx=leftedge;
-	print ("                    ");
-	sy--;
-	sx=leftedge;
-	print ("                    ");
-	sx=leftedge;
-	sy--;
-      }
+//      str[4]=ch;
+//      if (_Verify(str))
+//      {
+//	print ("\nGame exists,\noverwrite (Y/N)?");
+//	ch=get();
+//	if (ch!='Y' && ch!='y')
+//	  break;
+//	sx=leftedge;
+//	print ("                    ");
+//	sy--;
+//	sx=leftedge;
+//	print ("                    ");
+//	sx=leftedge;
+//	sy--;
+ //     }
       if ((handle = open(str, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC, S_IREAD | S_IWRITE)) == -1)
 	return;
       write(handle, &saveitems, sizeof(items));
@@ -772,30 +771,31 @@ void dofkeys (void)
       write(handle, &saveo[0],sizeof(o[0]));
 
       close(handle);
-      print ("\nGame saved.  Hit F5\n");
-      print ("when you wish to\n");
-      print ("restart the game.");
+//      print ("\nGame saved. Hit F5\n");
+      print ("Game saved.");
+//      print ("when you wish to\n");
+//      print ("restart the game.");
       get();
       break;
 
     case SDL_SCANCODE_F5:			// F5
       clearkeys ();
-      expwin (22,4);
-      print ("Load game #(1-9):");
-      ch=toupper(get());
-      drawchar (sx,sy,ch);
-      if (ch<'1' || ch>'9')
-	break;
+      expwin (16,1);
+//      print ("Load game #(1-9):");
+//      ch=toupper(get());
+//      drawchar (sx,sy,ch);
+//      if (ch<'1' || ch>'9')
+//	break;
       //
       // load game
       //
       strcpy (str,"GAME0.CA2");
-      str[4]=ch;
+//      str[4]=ch;
       if ((handle = open(str, O_RDONLY | O_BINARY, S_IWRITE | S_IREAD)) == -1)
       {
-	print ("\nGame not found.");
-	get ();
-	break;
+        print ("Game not found.");
+        get ();
+        break;
       }
       read(handle, &items, sizeof(items));
       read(handle, &score, sizeof(score));
@@ -805,6 +805,8 @@ void dofkeys (void)
       exitdemo = true;
       if (indemo != notdemo)
 	playdone = true;
+      print ("Game loaded.");
+      get();
       drawside ();		// draw score, icons, etc
       leveldone = true;
       break;
